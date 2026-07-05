@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>プロンプト自動セットアップツール🐰</title>
+<style>
+  :root {
+    --bg: #FDF8F3;
+    --card: #FFFFFF;
+    --brown: #5C4A3D;
+    --brown-light: #8A7365;
+    --pink: #F4C7C3;
+    --pink-deep: #E8A09A;
+    --accent: #D97757;
+    --line: #EFE5DB;
+    --ok: #7FA57A;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+    background: var(--bg);
+    color: var(--brown);
+    line-height: 1.7;
+    padding-bottom: 80px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+  header { text-align: center; padding: 24px 16px 8px; }
+  header h1 { font-size: 1.15rem; letter-spacing: .02em; }
+  header .sub { font-size: .78rem; color: var(--brown-light); margin-top: 6px; }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 12px 0;
+    box-shadow: 0 2px 8px rgba(92,74,61,.05);
+  }
+  .panel h2 { font-size: .95rem; margin-bottom: 4px; }
+  .panel .hint { font-size: .75rem; color: var(--brown-light); margin-bottom: 10px; }
+
+  label { display: block; font-size: .8rem; font-weight: 600; margin: 10px 0 4px; }
+  input[type="text"], textarea {
+    width: 100%;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 16px;
+    font-family: inherit;
+    background: #FFFDFB;
+    color: var(--brown);
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--pink-deep); }
+  textarea { resize: vertical; min-height: 64px; }
+
+  .btn {
+    display: inline-block;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-size: .9rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform .1s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-main { background: var(--accent); color: #fff; width: 100%; margin-top: 14px; }
+  .btn-copy { background: var(--pink); color: var(--brown); }
+  .btn-copy.copied { background: var(--ok); color: #fff; }
+
+  .status { font-size: .78rem; color: var(--ok); text-align: center; margin-top: 8px; min-height: 1.2em; }
+
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(253,248,243,.95);
+    backdrop-filter: blur(4px);
+    padding: 10px 0;
+    display: flex; gap: 6px; overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  nav button {
+    flex: 0 0 auto;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    color: var(--brown-light);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: .78rem;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  nav button.on { background: var(--brown); border-color: var(--brown); color: #fff; }
+
+  .chapter-head { margin: 20px 4px 4px; }
+  .chapter-head h2 { font-size: 1rem; }
+  .chapter-head p { font-size: .78rem; color: var(--brown-light); }
+
+  .card { position: relative; }
+  .card .no {
+    display: inline-block;
+    background: var(--pink);
+    color: var(--brown);
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    margin-bottom: 6px;
+  }
+  .card h3 { font-size: .95rem; margin-bottom: 4px; }
+  .card .when { font-size: .78rem; color: var(--brown-light); margin-bottom: 10px; }
+  .card .when::before { content: "💭 "; }
+
+  .preview {
+    background: #FAF3EC;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: .85rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-top: 10px;
+    border: 1px dashed var(--line);
+  }
+  .preview .tok { color: var(--accent); font-weight: 700; }
+  .card .fields label { font-size: .75rem; }
+  .card .foot { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  .card .copied-msg { font-size: .75rem; color: var(--ok); }
+
+  /* チェックリスト */
+  #checklist .check-sheet {
+    background: linear-gradient(160deg, #FFF6F0, #FDEDE8);
+    border-radius: 20px;
+    padding: 28px 22px;
+    border: 2px solid var(--pink);
+    text-align: left;
+  }
+  #checklist .check-sheet h2 { text-align: center; font-size: 1.05rem; margin-bottom: 2px; }
+  #checklist .check-sheet .cs-sub { text-align: center; font-size: .72rem; color: var(--brown-light); margin-bottom: 16px; }
+  #checklist ol { list-style: none; }
+  #checklist li {
+    background: #fff;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    font-size: .85rem;
+    font-weight: 600;
+    display: flex; gap: 10px; align-items: baseline;
+  }
+  #checklist li .num { color: var(--accent); font-weight: 800; }
+  #checklist .cs-foot { text-align: center; font-size: .72rem; color: var(--brown-light); margin-top: 14px; }
+
+  footer { text-align: center; font-size: .7rem; color: var(--brown-light); margin-top: 32px; padding: 0 16px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>🐰 プロンプト自動セットアップツール</h1>
+    <div class="sub">note「もう投稿で悩まない。楽天アフィのためのAIプロンプト30」購入者特典</div>
+  </header>
+
+  <section class="panel" id="settings">
+    <h2>はじめの設定(1回だけ)</h2>
+    <div class="hint">ここに入力すると、30本ぜんぶが"あなた用"に書き換わります。設定はこの端末に保存されます。</div>
+    <label>あなたのターゲット(誰に届けたい?)</label>
+    <input type="text" id="g-target" placeholder="例:30代のワーママ">
+    <label>あなたのジャンル</label>
+    <input type="text" id="g-genre" placeholder="例:キッチン用品・時短家事グッズ">
+    <label>紹介する商品の上限金額(円)</label>
+    <input type="text" id="g-budget" placeholder="例:3000" inputmode="numeric">
+    <button class="btn btn-main" onclick="saveSettings()">この内容でセットアップする🐰</button>
+    <div class="status" id="save-status"></div>
+  </section>
+
+  <nav id="nav"></nav>
+
+  <main id="list"></main>
+
+  <section id="checklist" class="hidden">
+    <div class="panel" style="background:transparent;border:none;box-shadow:none;padding:4px;">
+      <div class="check-sheet">
+        <h2>🐰 投稿まえの7つのチェック</h2>
+        <div class="cs-sub">ボタンを押す前に、スッと確認</div>
+        <ol>
+          <li><span class="num">1</span>一行目に、商品名を出してない?</li>
+          <li><span class="num">2</span>「誰のことか」ひと目で分かる?</li>
+          <li><span class="num">3</span>押しつけっぽくなってない?(24本目でチェック)</li>
+          <li><span class="num">4</span>「絶対」「必ず」「100%」を使ってない?</li>
+          <li><span class="num">5</span>#PR・#広告、つけた?</li>
+          <li><span class="num">6</span>1投稿1商品になってる?</li>
+          <li><span class="num">7</span>自分の言葉、ひとさじ足した?</li>
+        </ol>
+        <div class="cs-foot">ぜんぶ○なら、自信をもって投稿ボタンへ ❤️‍🔥</div>
+      </div>
+      <div class="hint" style="text-align:center;margin-top:10px;">↑この画面をスクショして、スマホに保存して使ってね</div>
+    </div>
+  </section>
+
+  <footer>
+    このツールはnote購入者さま限定の特典です。URLの共有はご遠慮ください🐰<br>
+    © monchan___life
+  </footer>
+</div>
+
+<script>
+// ================= データ =================
+const CHAPTERS = {
+  1: { name: "第1章 商品選び", desc: "「何を紹介しよう」で止まったら" },
+  2: { name: "第2章 誰に届けるか", desc: "投稿の軸を決める" },
+  3: { name: "第3章 一行目", desc: "閲覧数に一番効く章" },
+  4: { name: "第4章 本文づくり", desc: "説明を共感に変える" },
+  5: { name: "第5章 投稿前チェック", desc: "安心してボタンを押すために" },
+  6: { name: "第6章 振り返り", desc: "数字を味方につける" },
+};
+
+// {{target}} {{genre}} {{budget}} {{nextmonth}} = 全体設定で自動置換
+// fields = そのプロンプト専用の入力欄(空なら【】のまま表示)
+const PROMPTS = [
+  { ch:1, no:1, title:"季節先取りリサーチ",
+    when:"「今売れてるもの」だと埋もれる…と感じたとき",
+    tpl:"{{target}}が{{nextmonth}}に楽天で探しそうなものを、悩みとセットで5つ挙げてください。",
+    fields:[] },
+  { ch:1, no:2, title:"週まとめリサーチ",
+    when:"毎日その場で商品を探して疲れてしまうとき",
+    tpl:"今週紹介できそうな{{genre}}の商品を10個、それぞれ「誰のどんな悩みに合うか」つきで挙げてください。",
+    fields:[] },
+  { ch:1, no:3, title:"お買い物マラソン連動",
+    when:"5と0のつく日・マラソンに合わせたいとき",
+    tpl:"楽天お買い物マラソンで、{{target}}が買い回りの店舗数合わせに追加しそうな1000円台の商品を5つ挙げてください。",
+    fields:[] },
+  { ch:1, no:4, title:"候補の絞り込み",
+    when:"候補が複数あって迷って時間が溶けるとき",
+    tpl:"次の3つの商品のうち、{{target}}に一番合うのはどれですか?理由と、紹介するときの切り口も教えてください。\n1.[[itemA]]\n2.[[itemB]]\n3.[[itemC]]",
+    fields:[{k:"itemA",label:"商品A"},{k:"itemB",label:"商品B"},{k:"itemC",label:"商品C"}] },
+  { ch:1, no:5, title:"推せる度チェック",
+    when:"この商品、私が紹介していいのかな?と迷ったとき",
+    tpl:"この商品について、私が語れることを引き出す質問を5つしてください。\n商品:[[item]]",
+    fields:[{k:"item",label:"商品名"}] },
+  { ch:1, no:6, title:"価格帯フィルタ",
+    when:"気づくと高い商品ばかり選んでいるとき",
+    tpl:"{{budget}}円以下で、[[nayami]]を解決できる商品ジャンルを5つ、楽天で検索するときのキーワードつきで挙げてください。",
+    fields:[{k:"nayami",label:"解決したい悩み"}] },
+
+  { ch:2, no:7, title:"悩み5個出し(基本の1本)",
+    when:"書き出しが決まらないとき。迷ったらまずこれ",
+    tpl:"この商品を買う人の悩みを5個出してください。\n商品:[[item]]",
+    fields:[{k:"item",label:"商品名"}] },
+  { ch:2, no:8, title:"目線変換",
+    when:"悩みは出せたけど他人事っぽい文章になるとき",
+    tpl:"この商品で解決できる悩みを、{{target}}目線で3つ挙げてください。その人の生活の場面も添えてください。\n商品:[[item]]",
+    fields:[{k:"item",label:"商品名"}] },
+  { ch:2, no:9, title:"買う前の不安",
+    when:"クリックの先につながっていない気がするとき",
+    tpl:"この商品を買う前に{{target}}が抱える不安を3つ挙げて、それぞれを安心させる一言も添えてください。\n商品:[[item]]",
+    fields:[{k:"item",label:"商品名"}] },
+  { ch:2, no:10, title:"場面の解像度",
+    when:"使っている姿が浮かばない文章になっているとき",
+    tpl:"{{target}}がこの商品を使う場面を、朝・昼・夜のそれぞれで具体的に描写してください。\n商品:[[item]]",
+    fields:[{k:"item",label:"商品名"}] },
+  { ch:2, no:11, title:"ギフト目線",
+    when:"母の日・お中元など贈り物系の商品のとき",
+    tpl:"この商品を贈る人が、渡す瞬間に感じたい気持ちを3つ挙げてください。\n商品:[[item]]",
+    fields:[{k:"item",label:"商品名"}] },
+  { ch:2, no:12, title:"悩みの広さ判定",
+    when:"共感を狙ったのに閲覧が伸びなかったとき",
+    tpl:"この悩みは、どれくらいの人が「自分のことだ」と感じますか?狭すぎる場合は、もっと多くの人が自分ごとにできる言い換えも教えてください。\n悩み:[[nayami]]",
+    fields:[{k:"nayami",label:"一行目に使った悩み"}] },
+
+  { ch:3, no:13, title:"一行目3パターン",
+    when:"一行目が1個しか思いつかないとき",
+    tpl:"この投稿の一行目を、悩みから入る型・数字から入る型・質問から入る型の3パターンで作ってください。\n投稿:[[body]]",
+    fields:[{k:"body",label:"投稿の本文",type:"textarea"}] },
+  { ch:3, no:14, title:"手が止まるか判定",
+    when:"一行目の良し悪しが自分で判断できないとき",
+    tpl:"この一行目で、家事の合間にスクロールしている{{target}}の手が止まりますか?止まらない場合は、理由と直し方も教えてください。\n一行目:[[hook]]",
+    fields:[{k:"hook",label:"一行目"}] },
+  { ch:3, no:15, title:"商品名を消す",
+    when:"一行目に商品名を入れてしまう癖があるとき",
+    tpl:"この一行目から商品名を消して、読む人の悩みから始まる形に書き直してください。\n一行目:[[hook]]",
+    fields:[{k:"hook",label:"一行目"}] },
+  { ch:3, no:16, title:"自分ごと化テスト",
+    when:"誰に刺さる一行目か説明できないとき",
+    tpl:"この一行目を読んで「自分のことだ」と思うのはどんな人ですか?その人数を増やしたい場合の言い換えも教えてください。\n一行目:[[hook]]",
+    fields:[{k:"hook",label:"一行目"}] },
+  { ch:3, no:17, title:"続きが気になる切り方",
+    when:"最後まで読まれず離脱されている気がするとき",
+    tpl:"この文章を、途中で切ると続きが読みたくなる位置で2つに分けてください。切る位置の理由も教えてください。\n文章:[[body]]",
+    fields:[{k:"body",label:"本文",type:"textarea"}] },
+  { ch:3, no:18, title:"広告っぽさチェック",
+    when:"投稿がなんとなく「広告みたい」に見えるとき",
+    tpl:"この投稿が広告っぽく見える要素があれば指摘して、自然な言い方に直してください。\n投稿:[[body]]",
+    fields:[{k:"body",label:"本文",type:"textarea"}] },
+
+  { ch:4, no:19, title:"友達口調に変換",
+    when:"読み返して「押しつけがましいな」と感じたとき",
+    tpl:"この紹介文を、友達に話すみたいな口調に直してください。\n紹介文:[[body]]",
+    fields:[{k:"body",label:"紹介文",type:"textarea"}] },
+  { ch:4, no:20, title:"体験の3段構成",
+    when:"感想が「良かったです」で終わってしまうとき",
+    tpl:"この体験を「困ってた→試した→変わった」の3段構成にしてください。各段は2行以内で。\n体験:[[memo]]",
+    fields:[{k:"memo",label:"使ってみた感想(箇条書きでOK)",type:"textarea"}] },
+  { ch:4, no:21, title:"失敗談ミックス",
+    when:"良いことばかりで嘘っぽくなっている気がするとき",
+    tpl:"この商品を使う前にやりがちな失敗を2つ、共感される言い方で書いてください。\n商品:[[item]]",
+    fields:[{k:"item",label:"商品名"}] },
+  { ch:4, no:22, title:"3つの目線で書き分け",
+    when:"同じ商品の紹介がマンネリになってきたとき",
+    tpl:"この商品を、時短・節約・ギフトの3つの目線でそれぞれ紹介文にしてください。\n商品:[[item]]",
+    fields:[{k:"item",label:"商品名"}] },
+  { ch:4, no:23, title:"スペックをベネフィットに",
+    when:"商品ページをなぞっただけの文章になっているとき",
+    tpl:"この商品の特徴を、「生活がどう変わるか」の言葉に変換してください。\n特徴:[[spec]]",
+    fields:[{k:"spec",label:"商品ページの特徴をコピペ",type:"textarea"}] },
+
+  { ch:5, no:24, title:"押しつけ度チェック",
+    when:"投稿前の最終確認。少しでも引っかかったとき",
+    tpl:"この文章の押しつけがましい部分・売り込みっぽい部分を指摘して、フラットな言い方に直してください。\n文章:[[body]]",
+    fields:[{k:"body",label:"本文",type:"textarea"}] },
+  { ch:5, no:25, title:"表現の安全チェック",
+    when:"「絶対」「必ず」を使っていないか不安なとき",
+    tpl:"この投稿に、景品表示法や薬機法の観点で危ない表現(必ず・絶対・100%・治る・痩せる等の断定)がないかチェックして、あれば言い換えを教えてください。\n投稿:[[body]]",
+    fields:[{k:"body",label:"本文",type:"textarea"}] },
+  { ch:5, no:26, title:"長さの調整",
+    when:"全部書いたら長すぎてしまったとき",
+    tpl:"この投稿を、意味を変えずに[[len]]文字以内にしてください。削った内容も教えてください。\n投稿:[[body]]",
+    fields:[{k:"len",label:"文字数(例:300)"},{k:"body",label:"本文",type:"textarea"}] },
+
+  { ch:6, no:27, title:"沈んだ理由の分析",
+    when:"伸びなかったけど理由が分からないとき",
+    tpl:"この投稿が伸びなかった理由を、構成・切り口・タイミングの3つの観点で分析してください。\n投稿:[[body]]\n閲覧数など:[[stats]]",
+    fields:[{k:"body",label:"本文",type:"textarea"},{k:"stats",label:"閲覧数・いいね数など"}] },
+  { ch:6, no:28, title:"伸びた型の抽出",
+    when:"たまたま伸びた投稿の理由が分からないとき",
+    tpl:"この伸びた投稿の型(構成・一行目の入り方・締め方)を抽出して、別の商品でも使えるテンプレートにしてください。\n投稿:[[body]]",
+    fields:[{k:"body",label:"伸びた投稿の本文",type:"textarea"}] },
+  { ch:6, no:29, title:"過去投稿のリサイクル",
+    when:"ネタが切れたとき。新作の前にやること",
+    tpl:"この過去投稿を、季節が変わった今の視点で書き直してください。\n投稿:[[body]]",
+    fields:[{k:"body",label:"過去の投稿",type:"textarea"}] },
+  { ch:6, no:30, title:"週次ふりかえり",
+    when:"週の終わりに5分だけ。来週をラクにするために",
+    tpl:"今週の投稿と数字を貼ります。来週「続けること」「やめること」「試すこと」を1つずつ提案してください。\n[[weekly]]",
+    fields:[{k:"weekly",label:"今週の投稿と閲覧数・いいね数",type:"textarea"}] },
+];
+
+const DEFAULTS = { target:"【ターゲット】", genre:"【ジャンル】", budget:"【予算】" };
+const FIELD_PH = {}; // 空欄のとき表示する【】
+let settings = { target:"", genre:"", budget:"" };
+let fieldValues = {}; // {no: {k: value}}
+let currentCh = 1;
+
+function nextMonthLabel() {
+  const d = new Date();
+  const m = d.getMonth() + 2; // 来月
+  return (m > 12 ? m - 12 : m) + "月";
+}
+
+function esc(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function buildText(p, forHtml) {
+  let t = p.tpl
+    .replaceAll("{{target}}", settings.target || DEFAULTS.target)
+    .replaceAll("{{genre}}", settings.genre || DEFAULTS.genre)
+    .replaceAll("{{budget}}", settings.budget || DEFAULTS.budget)
+    .replaceAll("{{nextmonth}}", nextMonthLabel());
+  const vals = fieldValues[p.no] || {};
+  p.fields.forEach(f => {
+    const v = (vals[f.k] || "").trim();
+    t = t.replaceAll("[[" + f.k + "]]", v ? v : "【" + f.label + "】");
+  });
+  if (!forHtml) return t;
+  // プレビュー用: 未入力の【】をハイライト
+  return esc(t).replace(/【[^】]+】/g, m => '<span class="tok">' + m + "</span>");
+}
+
+function render() {
+  // ナビ
+  const nav = document.getElementById("nav");
+  nav.innerHTML = "";
+  for (const ch of [1,2,3,4,5,6]) {
+    const b = document.createElement("button");
+    b.textContent = CHAPTERS[ch].name.replace("第","").replace("章"," ");
+    b.className = ch === currentCh && currentCh !== "check" ? "on" : "";
+    b.onclick = () => { currentCh = ch; render(); window.scrollTo(0, document.getElementById("nav").offsetTop); };
+    nav.appendChild(b);
+  }
+  const bc = document.createElement("button");
+  bc.textContent = "✅ チェックリスト";
+  bc.className = currentCh === "check" ? "on" : "";
+  bc.onclick = () => { currentCh = "check"; render(); };
+  nav.appendChild(bc);
+
+  const list = document.getElementById("list");
+  const checkSec = document.getElementById("checklist");
+  if (currentCh === "check") {
+    list.innerHTML = "";
+    checkSec.classList.remove("hidden");
+    return;
+  }
+  checkSec.classList.add("hidden");
+
+  const ch = CHAPTERS[currentCh];
+  let html = '<div class="chapter-head"><h2>' + ch.name + "</h2><p>" + ch.desc + "</p></div>";
+  PROMPTS.filter(p => p.ch === currentCh).forEach(p => {
+    html += '<div class="panel card" id="card-' + p.no + '">';
+    html += '<span class="no">' + p.no + "本目</span>";
+    html += "<h3>" + p.title + "</h3>";
+    html += '<div class="when">' + p.when + "</div>";
+    if (p.fields.length) {
+      html += '<div class="fields">';
+      p.fields.forEach(f => {
+        const v = (fieldValues[p.no] && fieldValues[p.no][f.k]) || "";
+        html += "<label>" + f.label + "</label>";
+        if (f.type === "textarea") {
+          html += '<textarea data-no="' + p.no + '" data-k="' + f.k + '" oninput="onField(this)">' + esc(v) + "</textarea>";
+        } else {
+          html += '<input type="text" data-no="' + p.no + '" data-k="' + f.k + '" value="' + esc(v).replaceAll('"',"&quot;") + '" oninput="onField(this)">';
+        }
+      });
+      html += "</div>";
+    }
+    html += '<div class="preview" id="pv-' + p.no + '">' + buildText(p, true) + "</div>";
+    html += '<div class="foot"><button class="btn btn-copy" onclick="copyPrompt(' + p.no + ', this)">コピーする</button><span class="copied-msg" id="cm-' + p.no + '"></span></div>';
+    html += "</div>";
+  });
+  list.innerHTML = html;
+}
+
+function onField(el) {
+  const no = Number(el.dataset.no), k = el.dataset.k;
+  fieldValues[no] = fieldValues[no] || {};
+  fieldValues[no][k] = el.value;
+  const p = PROMPTS.find(x => x.no === no);
+  document.getElementById("pv-" + no).innerHTML = buildText(p, true);
+}
+
+function copyPrompt(no, btn) {
+  const p = PROMPTS.find(x => x.no === no);
+  const text = buildText(p, false);
+  const done = () => {
+    btn.classList.add("copied");
+    btn.textContent = "コピーしました";
+    document.getElementById("cm-" + no).textContent = "AIに貼りつけてね🐰";
+    setTimeout(() => {
+      btn.classList.remove("copied");
+      btn.textContent = "コピーする";
+      document.getElementById("cm-" + no).textContent = "";
+    }, 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+
+function fallbackCopy(text, done) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); done(); } catch(e) { alert("コピーできませんでした。長押しでコピーしてください"); }
+  document.body.removeChild(ta);
+}
+
+function saveSettings() {
+  settings.target = document.getElementById("g-target").value.trim();
+  settings.genre = document.getElementById("g-genre").value.trim();
+  settings.budget = document.getElementById("g-budget").value.trim();
+  try { localStorage.setItem("p30_settings", JSON.stringify(settings)); } catch(e) {}
+  document.getElementById("save-status").textContent = "保存しました!30本があなた用になりました🐰✨";
+  render();
+}
+
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem("p30_settings"));
+    if (s) {
+      settings = s;
+      document.getElementById("g-target").value = s.target || "";
+      document.getElementById("g-genre").value = s.genre || "";
+      document.getElementById("g-budget").value = s.budget || "";
+    }
+  } catch(e) {}
+}
+
+loadSettings();
+render();
+</script>
+</body>
+</html>
